@@ -28,50 +28,50 @@ NAF_PARAMS = {
 
 
 def load_dataset(args):
-    if args.dataset == 'gas':
-        dataset = GAS(r'C:\Users\just\PycharmProjects\BNAF\data/gas/ethylene_CO.pickle')
-    elif args.dataset == 'bsds300':
-        dataset = BSDS300(r'C:\Users\just\PycharmProjects\BNAF\data/BSDS300/BSDS300.hdf5')
-    elif args.dataset == 'hepmass':
-        dataset = HEPMASS(r'C:\Users\just\PycharmProjects\BNAF\data/hepmass')
-    elif args.dataset == 'miniboone':
-        dataset = MINIBOONE(r'C:\Users\just\PycharmProjects\BNAF\data/miniboone/data.npy')
-    elif args.dataset == 'power':
-        dataset = POWER(r'C:\Users\just\PycharmProjects\BNAF\data/power/data.npy')
-    else:
-        raise RuntimeError()
-
-    dataset_train = torch.utils.data.TensorDataset(
-        torch.from_numpy(dataset.trn.x).float().to(args.device))
-    data_loader_train = torch.utils.data.DataLoader(dataset_train, batch_size=args.batch_dim, shuffle=True)
-
-    dataset_valid = torch.utils.data.TensorDataset(
-        torch.from_numpy(dataset.val.x).float().to(args.device))
-    data_loader_valid = torch.utils.data.DataLoader(dataset_valid, batch_size=args.batch_dim, shuffle=False)
-
-    dataset_test = torch.utils.data.TensorDataset(
-        torch.from_numpy(dataset.tst.x).float().to(args.device))
-    data_loader_test = torch.utils.data.DataLoader(dataset_test, batch_size=args.batch_dim, shuffle=False)
-
-    args.n_dims = dataset.n_dims
-
-
-    # train_size = 3000
-    # dataset = np.arcsinh(5*np.random.RandomState(111).normal(0,1,size=[3*train_size,1]).astype(np.float32))
+    # if args.dataset == 'gas':
+    #     dataset = GAS(r'C:\Users\just\PycharmProjects\BNAF\data/gas/ethylene_CO.pickle')
+    # elif args.dataset == 'bsds300':
+    #     dataset = BSDS300(r'C:\Users\just\PycharmProjects\BNAF\data/BSDS300/BSDS300.hdf5')
+    # elif args.dataset == 'hepmass':
+    #     dataset = HEPMASS(r'C:\Users\just\PycharmProjects\BNAF\data/hepmass')
+    # elif args.dataset == 'miniboone':
+    #     dataset = MINIBOONE(r'C:\Users\just\PycharmProjects\BNAF\data/miniboone/data.npy')
+    # elif args.dataset == 'power':
+    #     dataset = POWER(r'C:\Users\just\PycharmProjects\BNAF\data/power/data.npy')
+    # else:
+    #     raise RuntimeError()
     #
     # dataset_train = torch.utils.data.TensorDataset(
-    #     torch.from_numpy(dataset[:train_size]).float().to(args.device))
-    # data_loader_train = torch.utils.data.DataLoader(dataset_train, batch_size=args.batch_dim, shuffle=False)
+    #     torch.from_numpy(dataset.trn.x).float().to(args.device))
+    # data_loader_train = torch.utils.data.DataLoader(dataset_train, batch_size=args.batch_dim, shuffle=True)
     #
     # dataset_valid = torch.utils.data.TensorDataset(
-    #     torch.from_numpy(dataset[train_size:2*train_size]).float().to(args.device))
+    #     torch.from_numpy(dataset.val.x).float().to(args.device))
     # data_loader_valid = torch.utils.data.DataLoader(dataset_valid, batch_size=args.batch_dim, shuffle=False)
     #
     # dataset_test = torch.utils.data.TensorDataset(
-    #     torch.from_numpy(dataset[train_size*2:]).float().to(args.device))
+    #     torch.from_numpy(dataset.tst.x).float().to(args.device))
     # data_loader_test = torch.utils.data.DataLoader(dataset_test, batch_size=args.batch_dim, shuffle=False)
     #
-    # args.n_dims = 1
+    # args.n_dims = dataset.n_dims
+
+
+    train_size = 3000
+    dataset = np.arcsinh(5*np.random.RandomState(111).normal(0,1,size=[3*train_size,1]).astype(np.float32))
+
+    dataset_train = torch.utils.data.TensorDataset(
+        torch.from_numpy(dataset[:train_size]).float().to(args.device))
+    data_loader_train = torch.utils.data.DataLoader(dataset_train, batch_size=args.batch_dim, shuffle=False)
+
+    dataset_valid = torch.utils.data.TensorDataset(
+        torch.from_numpy(dataset[train_size:2*train_size]).float().to(args.device))
+    data_loader_valid = torch.utils.data.DataLoader(dataset_valid, batch_size=args.batch_dim, shuffle=False)
+
+    dataset_test = torch.utils.data.TensorDataset(
+        torch.from_numpy(dataset[train_size*2:]).float().to(args.device))
+    data_loader_test = torch.utils.data.DataLoader(dataset_test, batch_size=args.batch_dim, shuffle=False)
+
+    args.n_dims = 1
     
     return data_loader_train, data_loader_valid, data_loader_test
 

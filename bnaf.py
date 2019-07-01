@@ -71,15 +71,27 @@ class BNAF(torch.nn.Sequential):
             grad = grad if len(grad.shape) == 4 else grad.view(grad.shape + [1, 1])
 
         assert inputs.shape[-1] == outputs.shape[-1]
+        grad = grad.squeeze()
+        reduce_sum = len(grad.shape) > 1
 
-        if self.res == 'normal':
-            return inputs + outputs, torch.nn.functional.softplus(grad.squeeze()).sum(-1)
-        elif self.res == 'gated':
-            return self.gate.sigmoid() * outputs + (1 - self.gate.sigmoid()) * inputs, \
-                   (torch.nn.functional.softplus(grad.squeeze() + self.gate) - \
-                    torch.nn.functional.softplus(self.gate)).sum(-1)
+        if reduce_sum:
+            if self.res == 'normal':
+                return inputs + outputs, torch.nn.functional.softplus(grad.squeeze()).sum(-1)
+            elif self.res == 'gated':
+                return self.gate.sigmoid() * outputs + (1 - self.gate.sigmoid()) * inputs, \
+                       (torch.nn.functional.softplus(grad.squeeze() + self.gate) - \
+                        torch.nn.functional.softplus(self.gate)).sum(-1)
+            else:
+                return outputs, grad.squeeze().sum(-1)
         else:
-            return outputs, grad.squeeze().sum(-1)
+            if self.res == 'normal':
+                return inputs + outputs, torch.nn.functional.softplus(grad.squeeze())
+            elif self.res == 'gated':
+                return self.gate.sigmoid() * outputs + (1 - self.gate.sigmoid()) * inputs, \
+                       (torch.nn.functional.softplus(grad.squeeze() + self.gate) - \
+                        torch.nn.functional.softplus(self.gate))
+            else:
+                return outputs, grad.squeeze()
 
     def _get_name(self):
         return 'BNAF(res={})'.format(self.res)
