@@ -16,6 +16,7 @@ from data.bsds300 import BSDS300
 from data.hepmass import HEPMASS
 from data.miniboone import MINIBOONE
 from data.power import POWER
+import numpy as np
 
 NAF_PARAMS = {
     'power': (414213, 828258),
@@ -28,15 +29,15 @@ NAF_PARAMS = {
 
 def load_dataset(args):
     if args.dataset == 'gas':
-        dataset = GAS('data/gas/ethylene_CO.pickle')
+        dataset = GAS(r'C:\Users\just\PycharmProjects\BNAF\data/gas/ethylene_CO.pickle')
     elif args.dataset == 'bsds300':
-        dataset = BSDS300('data/BSDS300/BSDS300.hdf5')
+        dataset = BSDS300(r'C:\Users\just\PycharmProjects\BNAF\data/BSDS300/BSDS300.hdf5')
     elif args.dataset == 'hepmass':
-        dataset = HEPMASS('data/hepmass')
+        dataset = HEPMASS(r'C:\Users\just\PycharmProjects\BNAF\data/hepmass')
     elif args.dataset == 'miniboone':
-        dataset = MINIBOONE('data/miniboone/data.npy')
+        dataset = MINIBOONE(r'C:\Users\just\PycharmProjects\BNAF\data/miniboone/data.npy')
     elif args.dataset == 'power':
-        dataset = POWER('data/power/data.npy')
+        dataset = POWER(r'C:\Users\just\PycharmProjects\BNAF\data/power/data.npy')
     else:
         raise RuntimeError()
 
@@ -51,15 +52,76 @@ def load_dataset(args):
     dataset_test = torch.utils.data.TensorDataset(
         torch.from_numpy(dataset.tst.x).float().to(args.device))
     data_loader_test = torch.utils.data.DataLoader(dataset_test, batch_size=args.batch_dim, shuffle=False)
-    
+
     args.n_dims = dataset.n_dims
+
+
+    # train_size = 3000
+    # dataset = np.arcsinh(5*np.random.RandomState(111).normal(0,1,size=[3*train_size,1]).astype(np.float32))
+    #
+    # dataset_train = torch.utils.data.TensorDataset(
+    #     torch.from_numpy(dataset[:train_size]).float().to(args.device))
+    # data_loader_train = torch.utils.data.DataLoader(dataset_train, batch_size=args.batch_dim, shuffle=False)
+    #
+    # dataset_valid = torch.utils.data.TensorDataset(
+    #     torch.from_numpy(dataset[train_size:2*train_size]).float().to(args.device))
+    # data_loader_valid = torch.utils.data.DataLoader(dataset_valid, batch_size=args.batch_dim, shuffle=False)
+    #
+    # dataset_test = torch.utils.data.TensorDataset(
+    #     torch.from_numpy(dataset[train_size*2:]).float().to(args.device))
+    # data_loader_test = torch.utils.data.DataLoader(dataset_test, batch_size=args.batch_dim, shuffle=False)
+    #
+    # args.n_dims = 1
     
     return data_loader_train, data_loader_valid, data_loader_test
 
 
 def create_model(args, verbose=False):
+    manualSeed = 1
+    np.random.seed(manualSeed)
+    # random.seed(manualSeed)
+    torch.manual_seed(manualSeed)
 
     flows = []
+    # for f in range(args.flows):
+    #     layers = []
+    #     for _ in range(args.layers - 1):
+    #         layers.append(MaskedWeight(args.n_dims * args.hidden_dim,
+    #                                    args.n_dims * args.hidden_dim, dim=args.n_dims))
+    #         layers.append(Tanh())
+    #         #
+    #         # layers.append(MaskedWeight(args.n_dims * args.hidden_dim,
+    #         #                            args.n_dims * args.hidden_dim, dim=args.n_dims))
+    #         # layers.append(Tanh())
+    #
+    #     flows.append(
+    #         BNAF(*([MaskedWeight(args.n_dims * args.hidden_dim, args.n_dims * args.hidden_dim, dim=args.n_dims), Tanh()] +
+    #                # [MaskedWeight(args.n_dims * args.hidden_dim, args.n_dims * args.hidden_dim, dim=args.n_dims), Tanh()] +
+    #                layers +
+    #                # [MaskedWeight(args.n_dims * args.hidden_dim, args.n_dims * args.hidden_dim, dim=args.n_dims),Tanh()] +
+    #                # [MaskedWeight(args.n_dims * args.hidden_dim, args.n_dims, dim=args.n_dims), Tanh()]),## +
+    #                [MaskedWeight(args.n_dims * args.hidden_dim, args.n_dims, dim=args.n_dims)]),
+    #              res=args.residual if f < args.flows - 1 else None
+    #         )
+    #     )
+
+    # for f in range(args.flows):
+    #     layers = []
+    #     for _ in range(args.layers - 1):
+    #         layers.append(MaskedWeight(args.n_dims * args.hidden_dim,
+    #                                    args.n_dims * args.hidden_dim, dim=args.n_dims))
+    #         layers.append(Tanh())
+    #         layers.append(aTanh())
+    #
+    #     flows.append(
+    #         BNAF(*([MaskedWeight(args.n_dims, args.n_dims * args.hidden_dim, dim=args.n_dims), Tanh(), aTanh()] + \
+    #                layers + \
+    #                # [MaskedWeight(args.n_dims * args.hidden_dim, args.n_dims, dim=args.n_dims)]), \
+    #                [MaskedWeight(args.n_dims, args.n_dims * args.hidden_dim, dim=args.n_dims), Tanh(), aTanh()]),
+    #              res=args.residual if f < args.flows - 1 else None
+    #              )
+    #     )
+
     for f in range(args.flows):
         layers = []
         for _ in range(args.layers - 1):
@@ -70,9 +132,9 @@ def create_model(args, verbose=False):
         flows.append(
             BNAF(*([MaskedWeight(args.n_dims, args.n_dims * args.hidden_dim, dim=args.n_dims), Tanh()] + \
                    layers + \
-                   [MaskedWeight(args.n_dims * args.hidden_dim, args.n_dims, dim=args.n_dims)]),\
+                   [MaskedWeight(args.n_dims * args.hidden_dim, args.n_dims, dim=args.n_dims)]), \
                  res=args.residual if f < args.flows - 1 else None
-            )
+                 )
         )
 
         if f < args.flows - 1:
@@ -168,7 +230,7 @@ def train(model, optimizer, scheduler, data_loader_train, data_loader_valid, dat
             writer.add_scalar('lr', optimizer.param_groups[0]['lr'], epoch + 1)
             writer.add_scalar('loss/validation', validation_loss.item(), epoch + 1)
             writer.add_scalar('loss/train', train_loss.item(), epoch + 1)
-        
+
         if stop:
             break
             
@@ -189,42 +251,66 @@ def train(model, optimizer, scheduler, data_loader_train, data_loader_valid, dat
             print('Validation loss: {:4.3f}'.format(validation_loss.item()), file=f)
             print('Test loss:       {:4.3f}'.format(test_loss.item()), file=f)
 
+class parser_:
+    pass
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--device', type=str, default='cuda:0')
-    parser.add_argument('--dataset', type=str, default='miniboone',
-                        choices=['gas', 'bsds300', 'hepmass', 'miniboone', 'power'])
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument('--device', type=str, default='cuda:0')
+    # parser.add_argument('--dataset', type=str, default='miniboone',
+    #                     choices=['gas', 'bsds300', 'hepmass', 'miniboone', 'power'])
+    #
+    # parser.add_argument('--learning_rate', type=float, default=1e-2)
+    # parser.add_argument('--batch_dim', type=int, default=200)
+    # parser.add_argument('--clip_norm', type=float, default=0.1)
+    # parser.add_argument('--epochs', type=int, default=1000)
+    #
+    # parser.add_argument('--patience', type=int, default=20)
+    # parser.add_argument('--cooldown', type=int, default=10)
+    # parser.add_argument('--early_stopping', type=int, default=100)
+    # parser.add_argument('--decay', type=float, default=0.5)
+    # parser.add_argument('--min_lr', type=float, default=5e-4)
+    # parser.add_argument('--polyak', type=float, default=0.998)
+    #
+    # parser.add_argument('--flows', type=int, default=5)
+    # parser.add_argument('--layers', type=int, default=1)
+    # parser.add_argument('--hidden_dim', type=int, default=10)
+    # parser.add_argument('--residual', type=str, default='gated',
+    #                    choices=[None, 'normal', 'gated'])
+    #
+    # parser.add_argument('--expname', type=str, default='')
+    # parser.add_argument('--load', type=str, default=None)
+    # parser.add_argument('--save', action='store_true')
+    # parser.add_argument('--tensorboard', type=str, default='tensorboard')
+    #
+    # args = parser.parse_args()
 
-    parser.add_argument('--learning_rate', type=float, default=1e-2)
-    parser.add_argument('--batch_dim', type=int, default=200)
-    parser.add_argument('--clip_norm', type=float, default=0.1)
-    parser.add_argument('--epochs', type=int, default=1000)
-    
-    parser.add_argument('--patience', type=int, default=20)
-    parser.add_argument('--cooldown', type=int, default=10)
-    parser.add_argument('--early_stopping', type=int, default=100)
-    parser.add_argument('--decay', type=float, default=0.5)
-    parser.add_argument('--min_lr', type=float, default=5e-4)
-    parser.add_argument('--polyak', type=float, default=0.998)
-
-    parser.add_argument('--flows', type=int, default=5)
-    parser.add_argument('--layers', type=int, default=1)
-    parser.add_argument('--hidden_dim', type=int, default=10)
-    parser.add_argument('--residual', type=str, default='gated',
-                       choices=[None, 'normal', 'gated'])
-
-    parser.add_argument('--expname', type=str, default='')
-    parser.add_argument('--load', type=str, default=None)
-    parser.add_argument('--save', action='store_true')
-    parser.add_argument('--tensorboard', type=str, default='tensorboard')
-    
-    args = parser.parse_args()
+    args = parser_()
+    args.device = 'cpu'  # '/gpu:0'
+    args.dataset = 'miniboone' #['gas', 'bsds300', 'hepmass', 'miniboone', 'power']
+    args.learning_rate = np.float32(1e-2)
+    args.batch_dim = 200
+    args.clip_norm = 0.1
+    args.epochs = 5000
+    args.patience = 10
+    args.cooldown = 10
+    args.early_stopping = 100
+    args.decay = 0.5
+    args.min_lr = 5e-4
+    args.flows = 1
+    args.layers = 1
+    args.hidden_dim = 3
+    args.residual = 'gated'
+    args.expname = ''
+    args.load = ''
+    args.save = True
+    args.tensorboard = 'tensorboard'
+    args.polyak = np.float32(0.998)
 
     print('Arguments:')
     pprint.pprint(args.__dict__)
 
-    args.path = os.path.join('checkpoint', '{}{}_layers{}_h{}_flows{}{}_{}'.format(
+    args.path = os.path.join(r'C:\Users\just\PycharmProjects\BNAF_pytorch\tensorboard\checkpoint', '{}{}_layers{}_h{}_flows{}{}_{}'.format(
         args.expname + ('_' if args.expname != '' else ''),
         args.dataset, args.layers, args.hidden_dim, args.flows, '_' + args.residual if args.residual else '',
         str(datetime.datetime.now())[:-7].replace(' ', '-').replace(':', '-')))
@@ -235,8 +321,8 @@ def main():
     if args.save and not args.load:
         print('Creating directory experiment..')
         os.mkdir(args.path)
-        with open(os.path.join(args.path, 'args.json'), 'w') as f:
-            json.dump(args.__dict__, f, indent=4, sort_keys=True)
+        # with open(os.path.join(args.path, 'args.json'), 'w') as f:
+        #     json.dump(args.__dict__, f, indent=4, sort_keys=True)
     
     print('Creating BNAF model..')
     model = create_model(args, verbose=True)
@@ -254,7 +340,8 @@ def main():
     args.start_epoch = 0
     if args.load:
         load_model(model, optimizer, args, load_start_epoch=True)()
-                
+
+
     print('Training..')
     train(model, optimizer, scheduler, data_loader_train, data_loader_valid, data_loader_test, args)
 
